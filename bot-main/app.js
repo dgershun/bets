@@ -59,7 +59,7 @@ bot.action(/choose-game#(.+)/, (ctx) => {
                 Markup.callbackButton(`${value}`, `save-score#${value}`)
             );
             const keyboard = Extra.HTML().markup((m) => m.inlineKeyboard(buttons, { columns: 2 }));
-            ctx.reply(`Selected game: ${chosenGame}`, keyboard);
+            ctx.reply(`Selected game: ${chosenGame}`);
             ctx.reply('Predict a score', keyboard);
         }
     });
