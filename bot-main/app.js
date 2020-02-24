@@ -21,7 +21,7 @@ const livescoreService = new LivescoreService(livescoreClient);
 const bot = new Telegraf(botToken);
 bot.use(session());
 
-const implementedCommands = ['/help', '/bet', '/past', '/live', '/coming'];
+const implementedCommands = ['/bet', '/past', '/live', '/coming', '/help'];
 const maxScore = 4;
 
 const scores = (() => {
@@ -59,8 +59,8 @@ bot.action(/choose-game#(.+)/, (ctx) => {
                 Markup.callbackButton(`${value}`, `save-score#${value}`)
             );
             const keyboard = Extra.HTML().markup((m) => m.inlineKeyboard(buttons, { columns: 2 }));
-            ctx.reply(`Selected gamed: ${chosenGame}`, keyboard);
-            ctx.reply('Predict a score:', keyboard);
+            ctx.reply(`Selected game: ${chosenGame}`, keyboard);
+            ctx.reply('Predict a score', keyboard);
         }
     });
 });
@@ -132,7 +132,7 @@ bot.command('bet', async (ctx) => {
         Markup.callbackButton(getGameTitle(game), `choose-game#${getGameTitle(game)}`)
     );
     ctx.reply(
-        'Choose the Game:',
+        'Choose the Game',
         Extra.markdown().markup((m) => m.inlineKeyboard(buttons, { columns: 1 }))
     );
 });
