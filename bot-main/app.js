@@ -21,6 +21,8 @@ const livescoreService = new LivescoreService(livescoreClient);
 const bot = new Telegraf(botToken);
 bot.use(session());
 
+const implementedCommands = ['/help', '/bet', '/past', '/live', '/coming'];
+
 const scores = (() => {
     const a = new Array(4).fill().map((_, i) => i);
     const b = a.slice(0);
@@ -106,12 +108,40 @@ bot.command('coming', async (ctx) => {
     ctx.replyWithHTML(response);
 });
 
-bot.start(async (ctx) => {
+bot.command('live', async (ctx) => {
+    const games = await livescoreService.getCLLiveGames();
+    if (games.length === 0) {
+        ctx.reply('No live games at the moment');
+        return;
+    }
+    const response = games
+        .map(
+            (game) =>
+                `${game.getTimeFromBeginning()}   <b>${game.getHomeName()}</b> - <b>${game.getAwayName()}</b>`
+        )
+        .join('\n');
+    ctx.replyWithHTML(response);
+});
+
+bot.command('bet', async (ctx) => {
     const upcomingGames = await airtableService.fetchUpcomingGames();
     const buttons = upcomingGames.map((game) => Markup.callbackButton(game, `choose-game#${game}`));
     ctx.reply(
         'Choose game',
         Extra.markdown().markup((m) => m.inlineKeyboard(buttons))
+    );
+});
+
+bot.help(async (ctx) => {
+    ctx.reply(
+        `List of available commands:\n\n${implementedCommands.join('\n\n')}`
+    );
+});
+
+bot.start(async (ctx) => {
+    ctx.reply('Hi!\nType /help for the commands list.');
+    ctx.reply(
+        `List of available commands:\n\n${implementedCommands.join('\n\n')}`
     );
 });
 

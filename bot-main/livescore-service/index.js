@@ -1,5 +1,5 @@
 const CL_COMPETITION_ID = '244';
-const { PastGame, ComingGame } = require('../football-game/index');
+const { PastGame, ComingGame, LiveGame } = require('../football-game');
 
 class LivescoreService {
     constructor(client) {
@@ -14,8 +14,14 @@ class LivescoreService {
 
     async getCLPastGames() {
         return (await this._client
-            .past({ competitionId: CL_COMPETITION_ID }))
+            .past({ competitionId: CL_COMPETITION_ID, from: '2020-01-01' }))
             .map((params) => new PastGame(params));
+    }
+
+    async getCLLiveGames() {
+        return (await this._client
+            .live({ competitionId: CL_COMPETITION_ID }))
+            .map((params) => new LiveGame(params));
     }
 }
 

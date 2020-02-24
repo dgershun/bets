@@ -1,4 +1,4 @@
-const format = require('date-fns/format');
+const { format, utcToZonedTime } = require('date-fns-tz');
 
 const { BaseGame } = require('./base-game');
 
@@ -10,7 +10,10 @@ class ComingGame extends BaseGame {
     }
 
     getDatetime() {
-        return format(this._datetime, 'dd MMM HH:mm');
+        const moscowTimeZone = 'Europe/Moscow';
+        const dateTime = this._datetime;
+        const moscowDatetime = utcToZonedTime(dateTime, moscowTimeZone);
+        return format(moscowDatetime, 'dd MMM HH:mm');
     }
 }
 

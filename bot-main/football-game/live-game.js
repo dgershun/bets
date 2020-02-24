@@ -1,23 +1,21 @@
-const { format } = require('date-fns');
-
 const { BaseGame } = require('./base-game');
 
-class PastGame extends BaseGame {
+class LiveGame extends BaseGame {
     constructor(params) {
         super(params);
         this._score = params.score;
-        this._date = new Date(`${params.date}`);
+        this._timeFromBeginning = params.time;
     }
 
     getScore() {
         return this._score;
     }
 
-    getDate() {
-        return format(this._date, 'dd MMM');
+    getTimeFromBeginning() {
+        return this._timeFromBeginning;
     }
 }
 
 module.exports = {
-    PastGame
+    LiveGame
 };

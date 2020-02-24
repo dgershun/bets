@@ -25,8 +25,8 @@ class LivescoreClient {
             .data.match;
     }
 
-    async past({ competitionId }) {
-        return (await this._request('/scores/history.json', { competition_id: competitionId })).data
+    async past({ competitionId, from }) {
+        return (await this._request('/scores/history.json', { competition_id: competitionId, from })).data
             .data.match;
     }
 }
