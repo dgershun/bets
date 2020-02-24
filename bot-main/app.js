@@ -22,9 +22,10 @@ const bot = new Telegraf(botToken);
 bot.use(session());
 
 const implementedCommands = ['/help', '/bet', '/past', '/live', '/coming'];
+const maxScore = 4;
 
 const scores = (() => {
-    const a = new Array(4).fill().map((_, i) => i);
+    const a = new Array(maxScore + 1).fill().map((_, i) => i);
     const b = a.slice(0);
     const result = [];
     a.forEach((i) => {
@@ -58,7 +59,8 @@ bot.action(/choose-game#(.+)/, (ctx) => {
                 Markup.callbackButton(`${value}`, `save-score#${value}`)
             );
             const keyboard = Extra.HTML().markup((m) => m.inlineKeyboard(buttons, { columns: 2 }));
-            ctx.reply('Choose score', keyboard);
+            ctx.reply(`Selected gamed: ${chosenGame}`, keyboard);
+            ctx.reply('Predict a score:', keyboard);
         }
     });
 });
@@ -124,25 +126,24 @@ bot.command('live', async (ctx) => {
 });
 
 bot.command('bet', async (ctx) => {
-    const upcomingGames = await airtableService.fetchUpcomingGames();
-    const buttons = upcomingGames.map((game) => Markup.callbackButton(game, `choose-game#${game}`));
+    const comingGames = await livescoreService.getCLComingGames();
+    const getGameTitle = (game) => `${game.getHomeName()} - ${game.getAwayName()}`;
+    const buttons = comingGames.map((game) =>
+        Markup.callbackButton(getGameTitle(game), `choose-game#${getGameTitle(game)}`)
+    );
     ctx.reply(
-        'Choose game',
-        Extra.markdown().markup((m) => m.inlineKeyboard(buttons))
+        'Choose the Game:',
+        Extra.markdown().markup((m) => m.inlineKeyboard(buttons, { columns: 1 }))
     );
 });
 
 bot.help(async (ctx) => {
-    ctx.reply(
-        `List of available commands:\n\n${implementedCommands.join('\n\n')}`
-    );
+    ctx.reply(`List of available commands:\n\n${implementedCommands.join('\n\n')}`);
 });
 
 bot.start(async (ctx) => {
     ctx.reply('Hi!\nType /help for the commands list.');
-    ctx.reply(
-        `List of available commands:\n\n${implementedCommands.join('\n\n')}`
-    );
+    ctx.reply(`List of available commands:\n\n${implementedCommands.join('\n\n')}`);
 });
 
 exports.lambdaHandler = async (event, context, callback) => {
