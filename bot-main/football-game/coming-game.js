@@ -10,7 +10,7 @@ class ComingGame extends BaseGame {
     }
 
     getDatetime() {
-        return format(this._date, 'dd MMM HH:mm');
+        return format(this._datetime, 'dd MMM HH:mm');
     }
 }
 
