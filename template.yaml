@@ -29,6 +29,7 @@ Resources:
       CodeUri: bot-main/
       Handler: app.lambdaHandler
       Runtime: nodejs12.x
+      Policies: AmazonDynamoDBFullAccess
       Events:
         BotMain:
           Type: Api
@@ -40,6 +41,37 @@ Resources:
           BOT_TOKEN: '{{resolve:ssm:IlovethisgameBotToken:2}}'
           AIRTABLE_TOKEN: '{{resolve:ssm:IlovethisgameAirtableToken:1}}'
           AIRTABLE_BASE: '{{resolve:ssm:IlovethisgameAirtableBase:1}}'
+          LIVESCORE_KEY: '{{resolve:ssm:IlovethisgameLivescoreKey:1}}'
+          LIVESCORE_SECRET: '{{resolve:ssm:IlovethisgameLivescoreSecret:1}}'
+
+  # ProcessDynamoDBStream:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     Handler: handler
+  #     Runtime: runtime
+  #     Policies: AWSLambdaDynamoDBExecutionRole
+  #     Events:
+  #       Stream:
+  #         Type: DynamoDB
+  #         Properties:
+  #           Stream: !GetAtt DynamoDBTable.StreamArn
+  #           BatchSize: 100
+  #           StartingPosition: TRIM_HORIZON
+
+  # DynamoDBTable:
+  #   Type: AWS::DynamoDB::Table
+  #   Properties:
+  #     AttributeDefinitions:
+  #       - AttributeName: userid
+  #         AttributeType: S
+  #     KeySchema:
+  #       - AttributeName: userid
+  #         KeyType: HASH
+  #     ProvisionedThroughput:
+  #       ReadCapacityUnits: 5
+  #       WriteCapacityUnits: 5
+  #     StreamSpecification:
+  #       StreamViewType: NEW_AND_OLD_IMAGES
 
 
 Outputs:
