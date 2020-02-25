@@ -21,7 +21,7 @@ const livescoreService = new LivescoreService(livescoreClient);
 const bot = new Telegraf(botToken);
 bot.use(session());
 
-const implementedCommands = ['/bet', '/past', '/live', '/coming', '/help'];
+const implementedCommands = ['/bet', '/past', '/live', '/coming', '/leaders', '/help'];
 const maxScore = 4;
 
 const scores = (() => {
@@ -135,6 +135,15 @@ bot.command('bet', async (ctx) => {
         'Choose the Game',
         Extra.markdown().markup((m) => m.inlineKeyboard(buttons, { columns: 1 }))
     );
+});
+
+bot.command('leaders', async (ctx) => {
+    const leaders = await airtableService.getLeaders();
+    const rows = Object.entries(leaders)
+        .sort((a, b) => b[1] - a[1])
+        .map(([hero, points]) => `${hero} - ${points}`)
+        .join('\n');
+    ctx.reply(`Leaders:\n\n${rows}`);
 });
 
 bot.help(async (ctx) => {
