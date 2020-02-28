@@ -119,7 +119,7 @@ bot.command('live', async (ctx) => {
     const response = games
         .map(
             (game) =>
-                `${game.getTimeFromBeginning()}   <b>${game.getHomeName()}</b> - <b>${game.getAwayName()}</b>`
+                `${game.getScore()}    ${game.getTimeFromBeginning()}   <b>${game.getHomeName()}</b> - <b>${game.getAwayName()}</b>`
         )
         .join('\n');
     ctx.replyWithHTML(response);
@@ -127,9 +127,8 @@ bot.command('live', async (ctx) => {
 
 bot.command('bet', async (ctx) => {
     const comingGames = await livescoreService.getCLComingGames();
-    const getGameTitle = (game) => `${game.getHomeName()} - ${game.getAwayName()}`;
     const buttons = comingGames.map((game) =>
-        Markup.callbackButton(getGameTitle(game), `choose-game#${getGameTitle(game)}`)
+        Markup.callbackButton(game.getTitle(), `choose-game#${game.getTitle()}`)
     );
     ctx.reply(
         'Choose the Game',
@@ -144,6 +143,61 @@ bot.command('leaders', async (ctx) => {
         .map(([hero, points]) => `${hero} - ${points}`)
         .join('\n');
     ctx.reply(`Leaders:\n\n${rows}`);
+});
+
+bot.command('update', async (ctx) => {
+    const pastGamesPromise = livescoreService.getCLPastGames();
+    const notFilledRecordsPromise = airtableService.selectNotFilledRecords();
+    const [pastGames, notFilledRecords] = await Promise.all([
+        pastGamesPromise,
+        notFilledRecordsPromise
+    ]);
+    const forUpdate = [];
+    notFilledRecords.forEach(({ recordId, humanId, gameTitle, bet, result, points }) => {
+        const currentGame = pastGames.find((game) => game.getTitle() === gameTitle);
+
+        if (!currentGame) {
+            return;
+        }
+
+        const forUpdateItem = {recordId, humanId};
+
+        if (result === undefined) {
+             const [score1, score2] = currentGame.getScore().split('-').map(s => s.trim());
+             forUpdateItem.result = `${score1}-${score2}`;
+        }
+
+        if (points === undefined) {
+            const score = currentGame.getScore();
+            const [betScore1, betScore2] = bet.split('-').map((s) => s.trim());
+            const [resultScore1, resultScore2] = score.split('-').map((s) => s.trim());
+            let pointsEarned;
+            if (betScore1 === resultScore1 && betScore2 === resultScore2) {
+                pointsEarned = 5;
+            } else if (betScore1 - betScore2 === resultScore1 - resultScore2) {
+                pointsEarned = 3;
+            } else if (
+                (betScore1 > betScore2 && resultScore1 > resultScore2) ||
+                (betScore1 < betScore2 && resultScore1 < resultScore2)
+            ) {
+                pointsEarned = 2;
+            } else {
+                pointsEarned = 0;
+            }
+            forUpdateItem.points = pointsEarned;
+        }
+
+        if ((points === undefined) || (result === undefined)) {
+            forUpdate.push(forUpdateItem);
+        }
+    });
+    const forUpdateHumanable = forUpdate.map(({humanId, result, points}) => ({id: humanId, result, points}));
+    await airtableService.updateRecords(forUpdate);
+    if (forUpdate.length > 0) {
+        ctx.reply(`Updated:\n\n${forUpdateHumanable.map(JSON.stringify).join('\n')}`);
+    } else {
+        ctx.reply('Table is up-to-date!')
+    }
 });
 
 bot.help(async (ctx) => {

@@ -13,6 +13,10 @@ class BaseGame {
     getAwayName() {
         return this._awayName;
     }
+
+    getTitle() {
+        return `${this.getHomeName()} - ${this.getAwayName()}`;
+    }
 }
 
 module.exports = {

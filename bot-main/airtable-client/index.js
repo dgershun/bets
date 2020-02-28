@@ -22,6 +22,14 @@ class AirtableClient {
     ) {
         return this.base(table).select(params).all();
     }
+
+    async updateRecord(
+        table,
+        id,
+        params
+    ) {
+        return await this.base(table).update(id, params);
+    }
 }
 
 module.exports = {
