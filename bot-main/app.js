@@ -9,6 +9,8 @@ const { AirtableClient } = require('./airtable-client/index');
 const { LivescoreClient } = require('./livescore-client');
 const { AirtableService } = require('./airtable-service');
 const { LivescoreService } = require('./livescore-service');
+const { PointsCalculator } = require('./points-calculator');
+const { GameResult } = require('./game-result');
 const { botToken } = require('./config');
 
 const { Markup, Extra } = Telegraf;
@@ -21,7 +23,9 @@ const livescoreService = new LivescoreService(livescoreClient);
 const bot = new Telegraf(botToken);
 bot.use(session());
 
-const implementedCommands = ['/bet', '/past', '/live', '/coming', '/leaders', '/help'];
+const publishedCommands = ['/bet', '/past', '/live', '/coming', '/leaders', '/help'];
+// eslint-disable-next-line no-unused-vars
+const implementedCommands = [...publishedCommands, '/updated'];
 const maxScore = 4;
 
 const scores = (() => {
@@ -93,7 +97,7 @@ bot.command('past', async (ctx) => {
     const response = games
         .map(
             (game) =>
-                `${game.getDate()}   <b>${game.getHomeName()}</b> - <b>${game.getAwayName()}</b>    ${game.getScore()}`
+                `${game.getDate()}   <b>${game.getHomeName()}</b> - <b>${game.getAwayName()}</b>    ${game.getScore()}    (FT: ${game.getFullTimeResult()})`
         )
         .join('\n');
     ctx.replyWithHTML(response);
@@ -160,53 +164,42 @@ bot.command('update', async (ctx) => {
             return;
         }
 
-        const forUpdateItem = {recordId, humanId};
+        const forUpdateItem = { recordId, humanId };
 
         if (result === undefined) {
-             const [score1, score2] = currentGame.getScore().split('-').map(s => s.trim());
-             forUpdateItem.result = `${score1}-${score2}`;
+            forUpdateItem.result = currentGame.getScore();
         }
 
         if (points === undefined) {
-            const score = currentGame.getScore();
-            const [betScore1, betScore2] = bet.split('-').map((s) => s.trim());
-            const [resultScore1, resultScore2] = score.split('-').map((s) => s.trim());
-            let pointsEarned;
-            if (betScore1 === resultScore1 && betScore2 === resultScore2) {
-                pointsEarned = 5;
-            } else if (betScore1 - betScore2 === resultScore1 - resultScore2) {
-                pointsEarned = 3;
-            } else if (
-                (betScore1 > betScore2 && resultScore1 > resultScore2) ||
-                (betScore1 < betScore2 && resultScore1 < resultScore2)
-            ) {
-                pointsEarned = 2;
-            } else {
-                pointsEarned = 0;
-            }
+            const betAsResult = new GameResult(bet);
+            const pointsEarned = new PointsCalculator(currentGame, betAsResult).getEarnedPoints();
             forUpdateItem.points = pointsEarned;
         }
 
-        if ((points === undefined) || (result === undefined)) {
+        if (points === undefined || result === undefined) {
             forUpdate.push(forUpdateItem);
         }
     });
-    const forUpdateHumanable = forUpdate.map(({humanId, result, points}) => ({id: humanId, result, points}));
+    const forUpdateHumanable = forUpdate.map(({ humanId, result, points }) => ({
+        id: humanId,
+        result,
+        points
+    }));
     await airtableService.updateRecords(forUpdate);
     if (forUpdate.length > 0) {
         ctx.reply(`Updated:\n\n${forUpdateHumanable.map(JSON.stringify).join('\n')}`);
     } else {
-        ctx.reply('Table is up-to-date!')
+        ctx.reply('The table is up-to-date!');
     }
 });
 
 bot.help(async (ctx) => {
-    ctx.reply(`List of available commands:\n\n${implementedCommands.join('\n\n')}`);
+    ctx.reply(`List of available commands:\n\n${publishedCommands.join('\n\n')}`);
 });
 
 bot.start(async (ctx) => {
     ctx.reply('Hi!\nType /help for the commands list.');
-    ctx.reply(`List of available commands:\n\n${implementedCommands.join('\n\n')}`);
+    ctx.reply(`List of available commands:\n\n${publishedCommands.join('\n\n')}`);
 });
 
 exports.lambdaHandler = async (event, context, callback) => {

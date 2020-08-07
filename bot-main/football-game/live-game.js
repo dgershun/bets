@@ -1,14 +1,15 @@
 const { BaseGame } = require('./base-game');
+const { GameResult } = require('../game-result');
 
 class LiveGame extends BaseGame {
     constructor(params) {
         super(params);
-        this._score = params.score;
+        this._result = new GameResult(params.score);
         this._timeFromBeginning = params.time;
     }
 
     getScore() {
-        return this._score;
+        return this._result.toString();
     }
 
     getTimeFromBeginning() {
