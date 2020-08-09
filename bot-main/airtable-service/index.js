@@ -3,15 +3,25 @@ class AirtableService {
         this._client = client;
     }
 
-    async makeBet(name, game, score) {
+    async makeBet(humanId, name, game, score) {
         const params = {
             fields: {
+                id: humanId,
                 Game: game,
                 Hero: name,
                 Bet: score
             }
         };
         return await this._client.createRecord('Bets', params);
+    }
+
+    async getHeroBets(name) {
+        const params = {
+            fields: ['id'],
+            filterByFormula: `Hero = '${name}'`
+        }
+        const records = await this._client.selectRecords('Bets', params);
+        return records.map((record) => record.get('id'));
     }
 
     async getLeaders() {
