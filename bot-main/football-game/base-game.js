@@ -1,9 +1,14 @@
 class BaseGame {
-    constructor({ home_name, away_name, competition, status }) {
+    constructor({ id, home_name, away_name, competition, status }) {
+        this._id = id;
         this._competition = competition;
         this._homeName = home_name;
         this._awayName = away_name;
         this._status = status;
+    }
+
+    getId() {
+        return this._id;
     }
 
     getHomeName() {
