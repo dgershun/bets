@@ -43,14 +43,14 @@ const scores = (() => {
 })();
 
 bot.action(/choose-game#(.+)/, (ctx) => {
-    const chosenGame = ctx.match[1];
+    const [humanId, chosenGame] = ctx.match[1].split('&');
     const userId = ctx.from.id;
 
     const params = {
         TableName: 'sessions',
         Item: {
             userid: userId.toString(),
-            sessionValue: { chosenGame }
+            sessionValue: { humanId, chosenGame }
         }
     };
 
@@ -85,9 +85,9 @@ bot.action(/save-score#(.+)/, async (ctx) => {
             console.log('Error', err);
         } else {
             console.log('Success', data.Item);
-            const chosenGame = data.Item.sessionValue.chosenGame;
-            airtableService.makeBet(name, chosenGame, score);
-            ctx.reply(`Saved! ${chosenGame} ${score}`);
+            const {humanId, chosenGame} = data.Item.sessionValue;
+            airtableService.makeBet(Number(humanId), name, chosenGame, score);
+            ctx.reply(`Saved! ${chosenGame} ${score}. One more /bet ?`);
         }
     });
 });
@@ -131,8 +131,21 @@ bot.command('live', async (ctx) => {
 
 bot.command('bet', async (ctx) => {
     const comingGames = await livescoreService.getCLComingGames();
-    const buttons = comingGames.map((game) =>
-        Markup.callbackButton(game.getTitle(), `choose-game#${game.getTitle()}`)
+    const name = ctx.from.first_name || ctx.from.username;
+    const heroBets = await airtableService.getHeroBets(name);
+    const filteredGames = comingGames.filter(
+        (game) => !heroBets.includes(Number(game.getId()))
+    )
+
+    if (filteredGames.length === 0) {
+        ctx.reply(
+            'You have already bet on all available games. Follow the results with the /live command!'
+        );
+        return;
+    }
+
+    const buttons = filteredGames.map((game) =>
+        Markup.callbackButton(game.getTitle(), `choose-game#${game.getId()}&${game.getTitle()}`)
     );
     ctx.reply(
         'Choose the Game',
@@ -203,7 +216,7 @@ bot.start(async (ctx) => {
 });
 
 exports.lambdaHandler = async (event, context, callback) => {
-    console.log(event);
+    console.log(event.body)
     const tmp = JSON.parse(event.body);
     bot.handleUpdate(tmp);
     return callback(null, {
