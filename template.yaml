@@ -27,9 +27,9 @@ Resources:
             Method: post
       Environment:
         Variables:
-          BOT_TOKEN: '{{resolve:ssm:IlovethisgameBotTokenDev:1}}'
-          AIRTABLE_TOKEN: '{{resolve:ssm:IlovethisgameAirtableTokenDev:1}}'
-          AIRTABLE_BASE: '{{resolve:ssm:IlovethisgameAirtableBaseDev:1}}'
+          BOT_TOKEN: '{{resolve:ssm:IlovethisgameBotToken:2}}'
+          AIRTABLE_TOKEN: '{{resolve:ssm:IlovethisgameAirtableToken:1}}'
+          AIRTABLE_BASE: '{{resolve:ssm:IlovethisgameAirtableBase:3}}'
           LIVESCORE_KEY: '{{resolve:ssm:IlovethisgameLivescoreKey:2}}'
           LIVESCORE_SECRET: '{{resolve:ssm:IlovethisgameLivescoreSecret:2}}'
 
