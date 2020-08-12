@@ -13,7 +13,7 @@ class LivescoreClient {
                 ...params
             }
         };
-        console.log(`Start request to ${baseUrl}${path} with params: ${JSON.stringify(queryParams)}`);
+        console.log(`Start request to ${baseUrl}${path}`);
         const response = axios.get(`${baseUrl}${path}`, queryParams);
         console.log('Response: ', JSON.stringify(response));
         return response;
