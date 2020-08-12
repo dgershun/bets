@@ -1,7 +1,7 @@
 class BaseGame {
-    constructor({ id, home_name, away_name, competition, status }) {
+    constructor({ id, home_name, away_name, competition_name, status }) {
         this._id = id;
-        this._competition = competition;
+        this._competition_name = competition_name;
         this._homeName = home_name;
         this._awayName = away_name;
         this._status = status;
