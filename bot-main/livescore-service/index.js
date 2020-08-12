@@ -12,14 +12,16 @@ class LivescoreService {
                 competitionId: CL_COMPETITION_ID,
             })
         )
-        // tmp for season 2020
-        .filter(({time}) => time.split(':')[0] === '19')
+        // tmp hack for invalid season 2019/2020
+        .filter(({league_id}) => league_id !== '0')
         .map((params) => new ComingGame(params));
     }
 
     async getCLPastGames() {
         return (await this._client
             .past({ competitionId: CL_COMPETITION_ID, from: '2020-01-01' }))
+        // tmp hack for invalid season 2019/2020
+        .filter(({league_id}) => league_id !== '0')
         .map((params) => new PastGame(params));
     }
 
@@ -29,8 +31,8 @@ class LivescoreService {
                 competitionId: CL_COMPETITION_ID,
             })
         )
-        // tmp for season 2020
-        .filter(({time}) => time.split(':')[0] === '19')
+        // tmp hack for invalid season 2019/2020
+        .filter(({league_id}) => league_id !== '0')
         .map((params) => new LiveGame(params));
     }
 }
