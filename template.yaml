@@ -18,6 +18,7 @@ Resources:
       Handler: app.lambdaHandler
       Runtime: nodejs12.x
       Policies: AmazonDynamoDBFullAccess
+      Timeout: 10
       Events:
         BotMain:
           Type: Api
@@ -26,11 +27,11 @@ Resources:
             Method: post
       Environment:
         Variables:
-          BOT_TOKEN: '{{resolve:ssm:IlovethisgameBotToken:2}}'
-          AIRTABLE_TOKEN: '{{resolve:ssm:IlovethisgameAirtableToken:1}}'
-          AIRTABLE_BASE: '{{resolve:ssm:IlovethisgameAirtableBase:1}}'
-          LIVESCORE_KEY: '{{resolve:ssm:IlovethisgameLivescoreKey:1}}'
-          LIVESCORE_SECRET: '{{resolve:ssm:IlovethisgameLivescoreSecret:1}}'
+          BOT_TOKEN: '{{resolve:ssm:IlovethisgameBotTokenDev:1}}'
+          AIRTABLE_TOKEN: '{{resolve:ssm:IlovethisgameAirtableTokenDev:1}}'
+          AIRTABLE_BASE: '{{resolve:ssm:IlovethisgameAirtableBaseDev:1}}'
+          LIVESCORE_KEY: '{{resolve:ssm:IlovethisgameLivescoreKey:2}}'
+          LIVESCORE_SECRET: '{{resolve:ssm:IlovethisgameLivescoreSecret:2}}'
 
   # ProcessDynamoDBStream:
   #   Type: AWS::Serverless::Function
