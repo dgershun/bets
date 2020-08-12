@@ -250,11 +250,11 @@ exports.lambdaHandler = async (event, context, callback) => {
                 resolve({statusCode: 500});
             } else {
                 if (data.Item) {
-                    console.log('Granted');
+                    console.log('Access granted');
                     bot.handleUpdate(eventBody);
                     resolve({statusCode: 200});
                 } else {
-                    console.log('Forbidden');
+                    console.log('Access denied');
                     resolve({statusCode: 403});
                 }
             }
