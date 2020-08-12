@@ -7,8 +7,8 @@ class PointsCalculator {
     getEarnedPoints() {
         const betScore1 = this._bet.getScore1();
         const betScore2 = this._bet.getScore2();
-        const gameScore1 = this._game.getFullTimeResult().getScore1();
-        const gameScore2 = this._game.getFullTimeResult().getScore2();
+        const gameScore1 = this._game.getFullTimeScore().getScore1();
+        const gameScore2 = this._game.getFullTimeScore().getScore2();
 
         if (betScore1 === gameScore1 && betScore2 === gameScore2) {
             return 5;

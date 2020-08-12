@@ -7,7 +7,7 @@ class PastGame extends BaseGame {
     constructor(params) {
         super(params);
         this._result = new GameResult(params.score);
-        this._fullTimeResult = new GameResult(params.ft_score);
+        this._fullTimeScore = new GameResult(params.ft_score);
         this._date = new Date(`${params.date}`);
     }
 
@@ -19,8 +19,8 @@ class PastGame extends BaseGame {
         return this._result.toString();
     }
 
-    getFullTimeResult() {
-        return this._fullTimeResult;
+    getFullTimeScore() {
+        return this._fullTimeScore;
     }
 
     getDate() {

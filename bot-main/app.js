@@ -93,17 +93,19 @@ bot.action(/save-score#(.+)/, async (ctx) => {
 });
 
 bot.command('past', async (ctx) => {
+    console.log('Start "/past" handler...');
     const games = await livescoreService.getCLPastGames();
     const response = games
         .map(
             (game) =>
-                `${game.getDate()}   <b>${game.getHomeName()}</b> - <b>${game.getAwayName()}</b>    ${game.getScore()}    (FT: ${game.getFullTimeResult()})`
+                `${game.getDate()}   <b>${game.getHomeName()}</b> - <b>${game.getAwayName()}</b>    ${game.getScore()}    (FT: ${game.getFullTimeScore()})`
         )
         .join('\n');
     ctx.replyWithHTML(response);
 });
 
 bot.command('coming', async (ctx) => {
+    console.log('Start "/coming" handler...');
     const games = await livescoreService.getCLComingGames();
     const response = games
         .map(
@@ -115,6 +117,7 @@ bot.command('coming', async (ctx) => {
 });
 
 bot.command('live', async (ctx) => {
+    console.log('Start "/live" handler...');
     const games = await livescoreService.getCLLiveGames();
     if (games.length === 0) {
         ctx.reply('No live games at the moment');
@@ -130,6 +133,7 @@ bot.command('live', async (ctx) => {
 });
 
 bot.command('bet', async (ctx) => {
+    console.log('Start "/bet" handler...');
     const comingGames = await livescoreService.getCLComingGames();
     const name = ctx.from.first_name || ctx.from.username;
     const heroBets = await airtableService.getHeroBets(name);
@@ -154,6 +158,7 @@ bot.command('bet', async (ctx) => {
 });
 
 bot.command('leaders', async (ctx) => {
+    console.log('Start "/leaders" handler...');
     const leaders = await airtableService.getLeaders();
     const rows = Object.entries(leaders)
         .sort((a, b) => b[1] - a[1])
@@ -163,15 +168,24 @@ bot.command('leaders', async (ctx) => {
 });
 
 bot.command('update', async (ctx) => {
+    console.log('Start "/update" handler...');
     const pastGamesPromise = livescoreService.getCLPastGames();
+    const liveGamesPromise = livescoreService.getCLLiveGames();
     const notFilledRecordsPromise = airtableService.selectNotFilledRecords();
-    const [pastGames, notFilledRecords] = await Promise.all([
+
+    const [pastGames, liveGames, notFilledRecords] = await Promise.all([
         pastGamesPromise,
+        liveGamesPromise,
         notFilledRecordsPromise
     ]);
+
+    const pastLiveGames = liveGames.filter((game) => game.isFinished());
+
+    const allPastGames = [...pastGames, ...pastLiveGames];
+
     const forUpdate = [];
     notFilledRecords.forEach(({ recordId, humanId, gameTitle, bet, result, points }) => {
-        const currentGame = pastGames.find((game) => game.getTitle() === gameTitle);
+        const currentGame = allPastGames.find((game) => game.getTitle() === gameTitle);
 
         if (!currentGame) {
             return;
@@ -216,11 +230,36 @@ bot.start(async (ctx) => {
 });
 
 exports.lambdaHandler = async (event, context, callback) => {
-    console.log(event.body)
-    const tmp = JSON.parse(event.body);
-    bot.handleUpdate(tmp);
-    return callback(null, {
-        statusCode: 200,
-        body: ''
+    console.log(event.body);
+    const eventBody = JSON.parse(event.body);
+    const { username, id: userId } = eventBody.message.from;
+    console.log(`From: ${username}`);
+
+    const params = {
+        TableName: 'sessions',
+        Key: {
+            userid: userId.toString(),
+        },
+        ProjectionExpression: 'userid',
+    };
+
+    const result = await new Promise((resolve) => {
+        docClient.get(params, function (err, data) {
+            if (err) {
+                console.log('Error', err);
+                resolve({statusCode: 500});
+            } else {
+                if (data.Item) {
+                    console.log('Granted');
+                    bot.handleUpdate(eventBody);
+                    resolve({statusCode: 200});
+                } else {
+                    console.log('Forbidden');
+                    resolve({statusCode: 403});
+                }
+            }
+        });
     });
+
+    return callback(null, result);
 };
