@@ -5,14 +5,18 @@ const { key, secret, baseUrl } = livescore;
 
 class LivescoreClient {
     // eslint-disable-next-line class-methods-use-this
-    _request(path, params) {
-        return axios.get(`${baseUrl}${path}`, {
+    async _request(path, params) {
+        const queryParams = {
             params: {
                 key,
                 secret,
                 ...params
             }
-        });
+        };
+        console.log(`Start request to ${baseUrl}${path} with params: ${JSON.stringify(queryParams)}`);
+        const response = axios.get(`${baseUrl}${path}`, queryParams);
+        console.log('Response: ', JSON.stringify(response));
+        return response;
     }
 
     async coming({ competitionId }) {
