@@ -232,7 +232,7 @@ bot.start(async (ctx) => {
 exports.lambdaHandler = async (event, context, callback) => {
     console.log(event.body);
     const eventBody = JSON.parse(event.body);
-    const { username, id: userId } = eventBody.message.from;
+    const { username, id: userId } = (eventBody.message || eventBody.callback_query.message).from;
     console.log(`From: ${username}`);
 
     const params = {
