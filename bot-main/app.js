@@ -12,6 +12,7 @@ const { LivescoreService } = require('./livescore-service');
 const { PointsCalculator } = require('./points-calculator');
 const { GameResult } = require('./game-result');
 const { botToken } = require('./config');
+const { auth } = require('./auth');
 
 const { Markup, Extra } = Telegraf;
 
@@ -35,7 +36,7 @@ const scores = (() => {
     a.forEach((i) => {
         b.forEach((j) => {
             result.push({
-                value: `${i}-${j}`
+                value: `${i}-${j}`,
             });
         });
     });
@@ -50,11 +51,11 @@ bot.action(/choose-game#(.+)/, (ctx) => {
         TableName: 'sessions',
         Item: {
             userid: userId.toString(),
-            sessionValue: { humanId, chosenGame }
-        }
+            sessionValue: { humanId, chosenGame },
+        },
     };
 
-    docClient.put(params, function(err, data) {
+    docClient.put(params, function (err, data) {
         if (err) {
             console.log('Error', err);
         } else {
@@ -76,16 +77,16 @@ bot.action(/save-score#(.+)/, async (ctx) => {
     const params = {
         TableName: 'sessions',
         Key: {
-            userid: userId.toString()
+            userid: userId.toString(),
         },
-        ProjectionExpression: 'sessionValue'
+        ProjectionExpression: 'sessionValue',
     };
-    docClient.get(params, function(err, data) {
+    docClient.get(params, function (err, data) {
         if (err) {
             console.log('Error', err);
         } else {
             console.log('Success', data.Item);
-            const {humanId, chosenGame} = data.Item.sessionValue;
+            const { humanId, chosenGame } = data.Item.sessionValue;
             airtableService.makeBet(Number(humanId), name, chosenGame, score);
             ctx.reply(`Saved! ${chosenGame} ${score}. One more /bet ?`);
         }
@@ -137,9 +138,7 @@ bot.command('bet', async (ctx) => {
     const comingGames = await livescoreService.getCLComingGames();
     const name = ctx.from.first_name || ctx.from.username;
     const heroBets = await airtableService.getHeroBets(name);
-    const filteredGames = comingGames.filter(
-        (game) => !heroBets.includes(Number(game.getId()))
-    )
+    const filteredGames = comingGames.filter((game) => !heroBets.includes(Number(game.getId())));
 
     if (filteredGames.length === 0) {
         ctx.reply(
@@ -176,7 +175,7 @@ bot.command('update', async (ctx) => {
     const [pastGames, liveGames, notFilledRecords] = await Promise.all([
         pastGamesPromise,
         liveGamesPromise,
-        notFilledRecordsPromise
+        notFilledRecordsPromise,
     ]);
 
     const pastLiveGames = liveGames.filter((game) => game.isFinished());
@@ -210,7 +209,7 @@ bot.command('update', async (ctx) => {
     const forUpdateHumanable = forUpdate.map(({ humanId, result, points }) => ({
         id: humanId,
         result,
-        points
+        points,
     }));
     await airtableService.updateRecords(forUpdate);
     if (forUpdate.length > 0) {
@@ -235,31 +234,14 @@ exports.lambdaHandler = async (event, context, callback) => {
     const { username, id: userId } = (eventBody.message || eventBody.callback_query.message).from;
     console.log(`From: ${username}`);
 
-    const params = {
-        TableName: 'sessions',
-        Key: {
-            userid: userId.toString(),
-        },
-        ProjectionExpression: 'userid',
-    };
+    const isBotCallback = !!eventBody.callback_query;
 
-    const result = await new Promise((resolve) => {
-        docClient.get(params, function (err, data) {
-            if (err) {
-                console.log('Error', err);
-                resolve({statusCode: 500});
-            } else {
-                if (data.Item) {
-                    console.log('Access granted');
-                    bot.handleUpdate(eventBody);
-                    resolve({statusCode: 200});
-                } else {
-                    console.log('Access denied');
-                    resolve({statusCode: 403});
-                }
-            }
-        });
-    });
+    // TODO extract docClient to the separate service
+    const [isAllowed, result] = await auth(isBotCallback, docClient, userId);
+
+    if (isAllowed) {
+        bot.handleUpdate(eventBody);
+    }
 
     return callback(null, result);
 };
