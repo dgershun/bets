@@ -20,7 +20,7 @@ class PointsCalculator {
 
         if (
             (betScore1 > betScore2 && gameScore1 > gameScore2) ||
-            (betScore1 < betScore2 && gameScore1 < gameScore1)
+            (betScore1 < betScore2 && gameScore1 < gameScore2)
         ) {
             return 2;
         }
@@ -30,5 +30,5 @@ class PointsCalculator {
 }
 
 module.exports = {
-    PointsCalculator
+    PointsCalculator,
 };
